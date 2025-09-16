@@ -1,10 +1,10 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
-# Ganti ini sesuai grup kamu
-GROUP_ID = -1001234567890
-BOT_TOKEN = "TOKEN_BOT_KAMU"
-CONTENT_LINK = "https://example.com/contoh-video-atau-gambar.jpg"
+# Data dari kamu
+GROUP_ID = -1003076566846
+BOT_TOKEN = "TOKEN_BOT_KAMU"  # Ganti dengan token botmu
+CONTENT_LINK = "https://example.com/contoh-video-atau-gambar.jpg"  # Ganti sesuai kontenmu
 
 def start(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
@@ -27,7 +27,7 @@ def start(update: Update, context: CallbackContext):
         )
     else:
         keyboard = [
-            [InlineKeyboardButton("Join dulu", url="https://t.me/namagrup")],
+            [InlineKeyboardButton("Join dulu", url="https://t.me/anisaaaaabot")],
             [InlineKeyboardButton("Coba Lagi", callback_data='check_join')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -58,7 +58,7 @@ def check_join_callback(update: Update, context: CallbackContext):
         )
     else:
         keyboard = [
-            [InlineKeyboardButton("Join dulu", url="https://t.me/namagrup")],
+            [InlineKeyboardButton("Join dulu", url="https://t.me/anisaaaaabot")],
             [InlineKeyboardButton("Coba Lagi", callback_data='check_join')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
