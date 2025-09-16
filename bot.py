@@ -1,71 +1,82 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-import uuid
-import os
-from dotenv import load_dotenv
-import telebot
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
-# Load token
-load_dotenv("token.env.txt")
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-BOT_USERNAME = os.getenv("BOT_USERNAME")  # username bot kamu, tanpa @
+# Ganti ini sesuai grup kamu
+GROUP_ID = -1001234567890
+BOT_TOKEN = "TOKEN_BOT_KAMU"
+CONTENT_LINK = "https://example.com/contoh-video-atau-gambar.jpg"
 
-if not BOT_TOKEN:
-    raise ValueError("BOT_TOKEN tidak ditemukan!")
+def start(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
 
-bot = telebot.TeleBot(BOT_TOKEN)
+    try:
+        member = context.bot.get_chat_member(GROUP_ID, user_id)
+        status = member.status
+    except Exception as e:
+        status = None
 
-# Simpan data unik
-image_data = {}
+    if status in ['member', 'administrator', 'creator']:
+        keyboard = [
+            [InlineKeyboardButton("Coba Lagi", callback_data='check_join')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
-# Handler upload foto
-@bot.message_handler(content_types=['photo'])
-def handle_photo(message):
-    file_id = message.photo[-1].file_id
-    unique_code = str(uuid.uuid4())[:8]  # kode unik
-    
-    # Link ke bot ini sendiri
-    bot_link = f"https://t.me/testertoko78_bot?start={unique_code}"
-
-    # Simpan data
-    image_data[unique_code] = {
-        "file_id": file_id,
-        "bot_link": bot_link
-    }
-
-    # Kirim gambar + caption (hanya link)
-    bot.send_photo(
-        message.chat.id,
-        file_id,
-        caption=f"👉 Klik link berikut untuk melanjutkan:\n{bot_link}"
-    )
-
-# Handler link unik (/start=kode)
-@bot.message_handler(commands=['start'])
-def start_handler(message):
-    parts = message.text.split(maxsplit=1)
-
-    if len(parts) > 1:
-        kode = parts[1]
-
-        if kode in image_data:
-            bot_link = image_data[kode]["bot_link"]
-
-            markup = InlineKeyboardMarkup()
-            markup.add(
-                InlineKeyboardButton("Join Dulu", url="https://t.me/livestreamingbolaaaaa"),
-                InlineKeyboardButton("Coba Lagi", url=bot_link)
-            )
-
-            # Kirim caption + tombol (tanpa gambar)
-            bot.send_message(
-                message.chat.id,
-                text=f"👉 Klik link berikut untuk melanjutkan:\n{bot_link}",
-                reply_markup=markup
-            )
-        else:
-            bot.send_message(message.chat.id, "❌ Link sudah tidak berlaku.")
+        update.message.reply_text(
+            f"Kamu sudah join grup!\nIni kontennya:\n{CONTENT_LINK}",
+            reply_markup=reply_markup
+        )
     else:
-        bot.send_message(message.chat.id, "👋 Halo! Selamat datang di bot 🚀")
+        keyboard = [
+            [InlineKeyboardButton("Join dulu", url="https://t.me/namagrup")],
+            [InlineKeyboardButton("Coba Lagi", callback_data='check_join')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
-print("🤖 Bot sedang berjalan...")
-bot.infinity_polling()
+        update.message.reply_text(
+            "Kamu belum join grup, silakan join dulu grup berikut:",
+            reply_markup=reply_markup
+        )
+
+def check_join_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    try:
+        member = context.bot.get_chat_member(GROUP_ID, user_id)
+        status = member.status
+    except Exception as e:
+        status = None
+
+    if status in ['member', 'administrator', 'creator']:
+        keyboard = [
+            [InlineKeyboardButton("Coba Lagi", callback_data='check_join')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(
+            f"Kamu sudah join grup!\nIni kontennya:\n{CONTENT_LINK}",
+            reply_markup=reply_markup
+        )
+    else:
+        keyboard = [
+            [InlineKeyboardButton("Join dulu", url="https://t.me/namagrup")],
+            [InlineKeyboardButton("Coba Lagi", callback_data='check_join')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(
+            "Kamu belum join grup, silakan join dulu grup berikut:",
+            reply_markup=reply_markup
+        )
+
+def main():
+    updater = Updater(BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
+
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CallbackQueryHandler(check_join_callback, pattern='^check_join$'))
+
+    print("Bot started...")
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
